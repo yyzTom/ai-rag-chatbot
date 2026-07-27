@@ -63,8 +63,8 @@ uvicorn main:app --reload
 
 ## Usage
 Follow these steps to run the application locally:
-1. Start the FastAPI backend server (runs on http://localhost:8000)
-2. Start the Vue 3 frontend development server (Vite default port 5173)
+1. Start the FastAPI backend server
+2. Start the Vue 3 frontend development server
 3. Open `http://localhost:5173` in your web browser to access the chat interface
 
 ## Roadmap
@@ -74,6 +74,3 @@ Follow these steps to run the application locally:
  - [ ] Stage 4: Basic LLM Integration (OpenAI API)
  - [ ] Stage 5: LangChain Document Upload Pipeline
  - [ ] Stage 6: pgvector RAG Vector Search Workflow
-
-### License
-MIT
