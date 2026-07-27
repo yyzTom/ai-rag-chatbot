@@ -30,14 +30,6 @@ The frontend sends chat messages to the FastAPI backend, which queries the datab
 | LLM       | OpenAI API |
 | RAG       | LangChain + pgvector |
 
-## Project Structure
-```
-ai-rag-chatbot/
- ├── frontend/          # Vue 3 + TypeScript frontend
- ├── backend/           # FastAPI backend
- └── README.md          # This file
-```
-
 
 ## Setup
 
@@ -67,21 +59,21 @@ source venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
-## Environment Variables
-Create .env files in both frontend/ and backend/:
 
-Variable	Description	Default
-(add as needed)		
-Usage
-Start the backend server
-Start the frontend development server
-Open http://localhost:5173 in your browser
-Roadmap
- Stage 1: Project Base Setup
- Stage 2: Vue 3 + TypeScript Frontend Base
- Stage 3: FastAPI Backend & PostgreSQL Chat History
- Stage 4: Basic LLM Integration (OpenAI API)
- Stage 5: LangChain Document Upload Pipeline
- Stage 6: pgvector RAG Vector Search Workflow
-License
+
+## Usage
+Follow these steps to run the application locally:
+1. Start the FastAPI backend server (runs on http://localhost:8000)
+2. Start the Vue 3 frontend development server (Vite default port 5173)
+3. Open `http://localhost:5173` in your web browser to access the chat interface
+
+## Roadmap
+ - [ ] Stage 1: Project Base Setup
+ - [ ] Stage 2: Vue 3 + TypeScript Frontend Base
+ - [ ] Stage 3: FastAPI Backend & PostgreSQL Chat History
+ - [ ] Stage 4: Basic LLM Integration (OpenAI API)
+ - [ ] Stage 5: LangChain Document Upload Pipeline
+ - [ ] Stage 6: pgvector RAG Vector Search Workflow
+
+### License
 MIT
