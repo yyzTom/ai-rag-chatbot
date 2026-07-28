@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const userMessage = ref(' ')
+const userMessage = ref('')
 </script>
 
 <template>
