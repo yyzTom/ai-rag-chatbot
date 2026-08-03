@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import { useChatStore } from './stores/chat'
+import apiClient from './api/client'
+
+const chatStore = useChatStore()
 const userMessage = ref('')
+
 </script>
 
 <template>
