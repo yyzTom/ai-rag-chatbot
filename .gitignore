@@ -26,6 +26,10 @@ backend/logs/
 backend/*.log
 backend/.pytest_cache/
 backend/.env
+backend/.cache/
+backend/.vector_store/
+backend/uploads/
+backend/temp_files/
 
 .vscode/*
 !.vscode/extensions.json
