@@ -14,8 +14,13 @@ export const useChatStore = defineStore('chat', () => {
         })
     }
 
+    function clearMessages() {
+        messages.value = []
+    }
+
     return {
         messages,
-        addMessage
+        addMessage,
+        clearMessages
     }
 })
