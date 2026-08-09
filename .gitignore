@@ -40,3 +40,5 @@ backend/temp_files/
 *.njsproj
 *.sln
 *.sw?
+
+CLAUDE.md
