@@ -56,6 +56,7 @@ venv\Scripts\activate
 
 # On Mac/Linux:
 source venv/bin/activate
+
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
@@ -66,11 +67,3 @@ Follow these steps to run the application locally:
 1. Start the FastAPI backend server
 2. Start the Vue 3 frontend development server
 3. Open `http://localhost:5173` in your web browser to access the chat interface
-
-## Roadmap
- - [ ] Stage 1: Project Base Setup
- - [ ] Stage 2: Vue 3 + TypeScript Frontend Base
- - [ ] Stage 3: FastAPI Backend & PostgreSQL Chat History
- - [ ] Stage 4: Basic LLM Integration (OpenAI API)
- - [ ] Stage 5: LangChain Document Upload Pipeline
- - [ ] Stage 6: pgvector RAG Vector Search Workflow
