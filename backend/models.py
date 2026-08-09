@@ -6,4 +6,4 @@ class ChatMessage(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_message = Column(String, nullable=False)
     ai_message = Column(String)
-    timestamp = Column(DateTime, nullable=False)
+    timestamp = Column(DateTime(timezone=True), nullable=False)
