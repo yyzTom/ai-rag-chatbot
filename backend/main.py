@@ -17,14 +17,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as db:
         yield db
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup logic: create tables before app runs
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
