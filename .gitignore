@@ -31,6 +31,11 @@ backend/.vector_store/
 backend/uploads/
 backend/temp_files/
 
+# Alembic logs/temp files
+backend/alembic/*.log
+backend/alembic/versions/__pycache__/
+backend/alembic/__pycache__/
+
 .vscode/*
 !.vscode/extensions.json
 .idea/
