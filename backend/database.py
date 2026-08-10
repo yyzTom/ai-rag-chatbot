@@ -1,3 +1,9 @@
+"""
+Database configuration and setup
+
+Handles SQLAlchemy async database configuration, engine creation, and session management.
+"""
+
 from dotenv import load_dotenv
 import os
 
