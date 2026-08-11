@@ -11,17 +11,6 @@
 - **Custom Document Upload Pipeline**: PDF and plain text file upload support, powered by LangChain for automated text splitting and chunk processing
 - **Semantic Vector Search (RAG)**: PostgreSQL pgvector extension enabling embedding-based similarity search, delivering context-aware AI answers grounded in your private uploaded documents
 
-## Architecture
-```
-  User → Frontend (Vue 3) → Backend (FastAPI) → PostgreSQL
-   ↓
- OpenAI LLM
-```
-
-The frontend sends chat messages to the FastAPI backend, which queries the database for chat history and calls OpenAI for AI responses. Document uploads are processed through LangChain and stored as vectors in pgvector for retrieval.
-
-
-
 ## Tech Stack
 
 | Component | Technology |
@@ -61,6 +50,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+#### Backend environment
+- Copy a LLM provider from .env.example to .env, uncomment LLM provider and fill credentials.
+
 ### Database Prep
 1. Create an empty PostgreSQL database (via pgAdmin or psql).
 2. Create backend/.env and populate DATABASE_URL with your database credentials.
@@ -79,7 +71,6 @@ alembic upgrade head
 ```bash
 uvicorn main:app --reload
 ```
-
 
 ## Usage
 Follow these steps to run the application locally:
