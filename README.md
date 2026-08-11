@@ -62,7 +62,7 @@ alembic upgrade head
 ```
 > When SQLAlchemy models are modified, generate new migration:
 > ```
-> alembic revision --autogenerate -m "describe change (#issue‑number)"
+> alembic revision --autogenerate -m "describe change"
 > # Review generated file in alembic/versions before applying
 > alembic upgrade head
 > ```
