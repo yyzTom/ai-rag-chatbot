@@ -6,13 +6,19 @@ Provides REST API endpoints for chat functionality with database integration.
 
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from openai import OpenAI, APIError
+from dotenv import load_dotenv
+import os
+
 from crud import create_chat_message
-from database import Base, engine, SessionLocal
+from database import engine, SessionLocal
+
+load_dotenv()
 
 # Pydantic request schema for POST /chat
 class ChatRequest(BaseModel):
@@ -33,8 +39,28 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     async with SessionLocal() as db:
         yield db
+        
+client: OpenAI | None = None
+LLM_MODEL: str | None = None
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global client, LLM_MODEL
+    # Startup
+    llm_api_key = os.getenv("LLM_API_KEY")
+    llm_base_url = os.getenv("LLM_BASE_URL")
+    LLM_MODEL = os.getenv("LLM_MODEL")
+    
+    if llm_api_key and llm_base_url and LLM_MODEL:
+        client = OpenAI(
+            api_key=llm_api_key,
+            base_url=llm_base_url
+        )
+    yield
+    # Shutdown
+    client = None
+
+app = FastAPI(lifespan=lifespan)
 
 # CORS configuration to allow frontend communication
 app.add_middleware(
@@ -68,15 +94,29 @@ async def test_route():
 @app.post("/chat")
 async def chat_endpoint(req: ChatRequest, db: AsyncSession = Depends(get_db)):
     """
-    Chat endpoint that processes user messages and returns mock AI responses.
+    Chat endpoint that processes user messages, calls configurable LLM and persists chat history.
 
     Args:
         req: ChatRequest containing the user's message
         db: Database session dependency
 
     Returns:
-        dict: Contains the AI response and saved message ID
+        dict: Contains the AI response, saved message ID, and model name
     """
-    mock_ai_reply = f"Echo: {req.message}"
-    saved_msg = await create_chat_message(db=db, user_message=req.message, ai_response=mock_ai_reply)
-    return {"response": mock_ai_reply, "saved_id": saved_msg.id}
+    if not client or not LLM_MODEL:
+        raise HTTPException(status_code=503, detail="LLM Environment variables not configured. Check .env file")
+    
+    try:
+        completion = client.chat.completions.create(
+            model= LLM_MODEL,
+            messages=[{"role": "user", "content": req.message}]
+        )
+        ai_reply = completion.choices[0].message.content or ""
+    
+    except APIError as e:
+        raise HTTPException(status_code=500, detail=f"LLM provider error: {str(e)}")
+    
+    
+    saved_msg = await create_chat_message(db=db, user_message=req.message, ai_response=ai_reply)
+    
+    return {"response": ai_reply, "saved_id": saved_msg.id, "model_used": LLM_MODEL}

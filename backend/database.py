@@ -17,5 +17,3 @@ from sqlalchemy.orm import sessionmaker
 engine = create_async_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, class_=AsyncSession)
 Base = declarative_base()
-
-from models import ChatMessage

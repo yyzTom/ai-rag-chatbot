@@ -11,10 +11,8 @@ frontend/pnpm-debug.log*
 frontend/lerna-debug.log*
 
 frontend/.env
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+frontend/.env.*
+!frontend/.env.example
 
 backend/venv/
 backend/__pycache__/
@@ -26,6 +24,8 @@ backend/logs/
 backend/*.log
 backend/.pytest_cache/
 backend/.env
+backend/.env.*
+!backend/.env.example
 backend/.cache/
 backend/.vector_store/
 backend/uploads/
