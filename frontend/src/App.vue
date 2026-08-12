@@ -2,12 +2,19 @@
 import { ref, nextTick} from 'vue'
 import { useChatStore } from './stores/chat'
 import apiClient from './api/client'
+import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 
 const chatStore = useChatStore()
 const userMessage = ref('')
 const isProcessing = ref(false)
 // template ref for scroll container
 const chatMessagesRef = ref<HTMLDivElement | null>(null)
+
+function renderMarkdown(text: string): string {
+  const rawHTML = marked.parse(text) as string
+  return DOMPurify.sanitize(rawHTML)
+}
 
 async function scrollToBottom() {
   await nextTick() // Wait for DOM render after new message
@@ -69,8 +76,8 @@ async function sendMessage() {
           </div>
         </div>
         <div v-if="message.ai" class="ai-message">
-          <div class="message-bubble">
-            <p>{{ message.ai }}</p>  
+          <div class="message-bubble markdown-bubble">
+            <div v-html="renderMarkdown(message.ai)"></div>  
           </div>
         </div>
       </div>
@@ -84,7 +91,6 @@ async function sendMessage() {
         type="textarea"
         :autosize="{ minRows:1, maxRows:4 }"
         @keyup.enter="sendMessage"
-        :disabled="isProcessing"
       />
       <el-button type="primary" @click="sendMessage" :disabled="isProcessing">
         {{ isProcessing ? "Thinking..." : "Send" }}
@@ -166,6 +172,34 @@ async function sendMessage() {
 .el-button {
   min-width: 60px;
   padding: 10px;
+}
+
+.markdown-bubble {
+  line-height: 1.4;
+}
+.markdown-bubble h1,
+.markdown-bubble h2,
+.markdown-bubble h3 {
+  margin: 6px 0;
+}
+.markdown-bubble p {
+  margin: 4px 0;
+}
+.markdown-bubble ul,
+.markdown-bubble ol {
+  padding-left: 22px;
+  margin: 6px 0;
+}
+.markdown-bubble code {
+  background: #222222;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.markdown-bubble pre {
+  background: #222222;
+  padding: 8px;
+  border-radius: 6px;
+  overflow-x: auto;
 }
 
 .chat-messages::-webkit-scrollbar {
