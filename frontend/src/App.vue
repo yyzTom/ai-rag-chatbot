@@ -1,16 +1,59 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick} from 'vue'
 import { useChatStore } from './stores/chat'
-// import apiClient from './api/client'
+import apiClient from './api/client'
 
 const chatStore = useChatStore()
 const userMessage = ref('')
+const isProcessing = ref(false)
+// template ref for scroll container
+const chatMessagesRef = ref<HTMLDivElement | null>(null)
 
-function sendMessage() {
-  if (userMessage.value.trim()) {
-    // Add user message to store
-    chatStore.addMessage(userMessage.value, '') // AI response will be added later
+async function scrollToBottom() {
+  await nextTick() // Wait for DOM render after new message
+  if (chatMessagesRef.value) {
+    chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+  }
+}
+
+async function typeWriter(messageId: number, fullText: string, speed = 10) {
+  let currentText = ''
+  for (const char of fullText) {
+    currentText += char
+    chatStore.updateAiResponse(messageId, currentText)
+    await new Promise(resolve => setTimeout(resolve, speed))
+  }
+}
+
+async function sendMessage() {
+  if (userMessage.value.trim() && !isProcessing.value) {
+    const userMsg = userMessage.value
+    const originalValue = userMessage.value
     userMessage.value = ""
+
+    // Add user message to store immdiately
+    const newMessage = chatStore.addMessage(userMsg, '')
+    const messageId = newMessage.id // Get the ID from the returned message
+
+    isProcessing.value = true
+
+    await scrollToBottom()
+    
+    try {
+      // Call backend API
+      const response = await apiClient.post('/chat', {
+        message: userMsg
+      })
+      const aiFullText = response.data.response
+      await typeWriter(messageId, aiFullText)
+
+    }catch (error) {
+      console.error('Error calling chat API:', error)
+      // Update with error message
+      chatStore.updateAiResponse(messageId, 'Sorry, there was an error processing your message.')
+    } finally {
+      isProcessing.value = false
+    }
   }
 }
 </script>
@@ -18,11 +61,11 @@ function sendMessage() {
 <template>
   <div class="chat-container">
     <!-- Message display area -->
-    <div class="chat-messages">
+    <div ref="chatMessagesRef" class="chat-messages">
       <div v-for="(message, index) in chatStore.messages" :key="index" class="messages">
         <div v-if="message.user" class="user-message">
           <div class="message-bubble">
-            <p>{{ message.user }}</p>  
+            <p>{{ message.user }}</p>
           </div>
         </div>
         <div v-if="message.ai" class="ai-message">
@@ -41,8 +84,11 @@ function sendMessage() {
         type="textarea"
         :autosize="{ minRows:1, maxRows:4 }"
         @keyup.enter="sendMessage"
+        :disabled="isProcessing"
       />
-      <el-button type="primary" @click="sendMessage">Send</el-button>
+      <el-button type="primary" @click="sendMessage" :disabled="isProcessing">
+        {{ isProcessing ? "Thinking..." : "Send" }}
+      </el-button>
     </div>
   </div>
 </template>
@@ -165,4 +211,3 @@ function sendMessage() {
   }
 }
 </style>
-
