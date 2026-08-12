@@ -11,6 +11,18 @@ const isProcessing = ref(false)
 // template ref for scroll container
 const chatMessagesRef = ref<HTMLDivElement | null>(null)
 
+const scrollToBottomSmart = () => {
+  if (!chatMessagesRef.value) return
+  const el = chatMessagesRef.value
+  const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+  // Only auto-scroll if user is already within 20px of bottom
+  const isNearBottom = distanceFromBottom < 20
+
+  if (isNearBottom) {
+    el.scrollTop = el.scrollHeight
+  }
+}
+
 function renderMarkdown(text: string): string {
   const rawHTML = marked.parse(text) as string
   return DOMPurify.sanitize(rawHTML)
@@ -29,13 +41,15 @@ async function typeWriter(messageId: number, fullText: string, speed = 10) {
     currentText += char
     chatStore.updateAiResponse(messageId, currentText)
     await new Promise(resolve => setTimeout(resolve, speed))
+
+    // Smart auto-scrolling for AI response
+    await nextTick(scrollToBottomSmart)
   }
 }
 
 async function sendMessage() {
   if (userMessage.value.trim() && !isProcessing.value) {
     const userMsg = userMessage.value
-    const originalValue = userMessage.value
     userMessage.value = ""
 
     // Add user message to store immdiately
@@ -69,7 +83,7 @@ async function sendMessage() {
   <div class="chat-container">
     <!-- Message display area -->
     <div ref="chatMessagesRef" class="chat-messages">
-      <div v-for="(message, index) in chatStore.messages" :key="index" class="messages">
+      <div v-for="(message, index) in chatStore.messages" :key="index" class="message">
         <div v-if="message.user" class="user-message">
           <div class="message-bubble">
             <p>{{ message.user }}</p>
@@ -104,7 +118,7 @@ async function sendMessage() {
   --chat-bg: #f5f5f5;
   --bubble-padding: 10px 15px;
   --bubble-margin: 5px;
-  --bubble-max-inner-width: 95%;
+  --bubble-max-inner-width: 75%;
 }
 
 /* Add basic styling for layout */
@@ -128,17 +142,15 @@ async function sendMessage() {
   background-color: var(--chat-bg);
   align-items: flex-end;
 }
-.message {
-  margin-bottom: 12px;
-  max-width: 70%;
-}
 
 .message-bubble {
   padding: var(--bubble-padding);
   margin: var(--bubble-margin);
   display: inline-block;
-  width: max-content;
+  width: auto;
   max-width: var(--bubble-max-inner-width);
+  font-size: 14px;
+  word-break: break-word;
 }
 
 .user-message {
@@ -234,14 +246,8 @@ async function sendMessage() {
 }
 
 @media (max-width: 768px) {
-  .message {
-    max-width: 85%;
-  }
-  .user-message {
-    margin-left: 15%;
-  }
-  .ai-message {
-    margin-right: 15%;
+  :root {
+    --bubble-max-inner-width: 85%;
   }
 }
 </style>
