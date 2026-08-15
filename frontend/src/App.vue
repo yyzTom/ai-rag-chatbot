@@ -10,17 +10,27 @@ const userMessage = ref('')
 const isProcessing = ref(false)
 // template ref for scroll container
 const chatMessagesRef = ref<HTMLDivElement | null>(null)
+const wantsFollow = ref(false)
+const isNearBottom = ref(false)
+
+function getGapFromBottom(): number {
+  if (!chatMessagesRef.value) return 0
+  const el = chatMessagesRef.value
+
+  return el.scrollHeight - el.scrollTop - el.clientHeight
+}
 
 const scrollToBottomSmart = () => {
-  if (!chatMessagesRef.value) return
-  const el = chatMessagesRef.value
-  const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
-  // Only auto-scroll if user is already within 20px of bottom
-  const isNearBottom = distanceFromBottom < 20
+  const gap = getGapFromBottom()
 
-  if (isNearBottom) {
-    el.scrollTop = el.scrollHeight
+  if (wantsFollow.value && gap < 30) {
+    if(chatMessagesRef.value) chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
   }
+}
+
+function handleScroll() {
+  const gap = getGapFromBottom()
+  isNearBottom.value = gap < 30
 }
 
 function renderMarkdown(text: string): string {
@@ -36,21 +46,32 @@ async function scrollToBottom() {
 }
 
 async function typeWriter(messageId: number, fullText: string, speed = 10) {
+  wantsFollow.value = true
   let currentText = ''
+  let charCounter = 0
+  const scrollEvery = 12  
+
   for (const char of fullText) {
     currentText += char
     chatStore.updateAiResponse(messageId, currentText)
-    await new Promise(resolve => setTimeout(resolve, speed))
+    charCounter++ 
 
-    // Smart auto-scrolling for AI response
-    await nextTick(scrollToBottomSmart)
+    if (charCounter >= scrollEvery) {
+      await nextTick(scrollToBottomSmart)
+      charCounter = 0
+    }
+
+    await new Promise(resolve => setTimeout(resolve, speed))
   }
+  wantsFollow.value = false
 }
 
 async function sendMessage() {
   if (userMessage.value.trim() && !isProcessing.value) {
     const userMsg = userMessage.value
     userMessage.value = ""
+
+    wantsFollow.value = true
 
     // Add user message to store immdiately
     const newMessage = chatStore.addMessage(userMsg, '')
@@ -61,20 +82,25 @@ async function sendMessage() {
     await scrollToBottom()
     
     try {
-      // Call backend API
-      const response = await apiClient.post('/chat', {
-        message: userMsg
-      })
-      const aiFullText = response.data.response
-      await typeWriter(messageId, aiFullText)
+        // Call backend API
+        const response = await apiClient.post('/chat', {
+          message: userMsg
+        })
+        const aiFullText = response.data.response
 
-    }catch (error) {
-      console.error('Error calling chat API:', error)
-      // Update with error message
-      chatStore.updateAiResponse(messageId, 'Sorry, there was an error processing your message.')
-    } finally {
-      isProcessing.value = false
-    }
+        chatStore.updateAiResponse(messageId, ' ')
+        await nextTick()
+        await scrollToBottom()
+        await typeWriter(messageId, aiFullText)
+        
+    } catch (error) {
+        console.error('Error calling chat API:', error)
+        // Update with error message
+        chatStore.updateAiResponse(messageId, 'Sorry, there was an error processing your message.')
+      } finally {
+        isProcessing.value = false
+        wantsFollow.value = false
+      }
   }
 }
 </script>
@@ -82,7 +108,7 @@ async function sendMessage() {
 <template>
   <div class="chat-container">
     <!-- Message display area -->
-    <div ref="chatMessagesRef" class="chat-messages">
+    <div ref="chatMessagesRef" class="chat-messages" @scroll="handleScroll">
       <div v-for="(message, index) in chatStore.messages" :key="index" class="message">
         <div v-if="message.user" class="user-message">
           <div class="message-bubble">
@@ -95,6 +121,16 @@ async function sendMessage() {
           </div>
         </div>
       </div>
+    </div>
+
+    <div
+      v-if="wantsFollow && chatMessagesRef && !isNearBottom"
+      class="scroll-btn-container"
+    >
+      <!-- spinning ring, inside container -->
+      <div class="scroll-ring" :class="{ spinning: wantsFollow }"></div>
+      <!-- static clickable button, sits on top, NO rotation -->
+      <button class="scroll-down-btn" @click="scrollToBottom">↓</button>
     </div>
 
     <!-- Input area -->
@@ -119,6 +155,7 @@ async function sendMessage() {
   --bubble-padding: 10px 15px;
   --bubble-margin: 5px;
   --bubble-max-inner-width: 75%;
+  --input-area-height: 65px;
 }
 
 /* Add basic styling for layout */
@@ -127,6 +164,7 @@ async function sendMessage() {
   display: flex;
   flex-direction: column;
   font-family: 'Arial', sans-serif;
+  position: relative;
 }
 .chat-messages {
   flex: 1;
@@ -143,6 +181,52 @@ async function sendMessage() {
   align-items: flex-end;
 }
 
+/* This single container handles all positioning */
+.scroll-btn-container {
+  position: absolute;
+  bottom: calc(var(--input-area-height) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+}
+
+/* spinning ring: inside container, spins, no position offset */
+.scroll-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: conic-gradient(from 180deg, transparent 0%, #2563eb 90%);
+  pointer-events: none;
+}
+.scroll-ring.spinning {
+  animation: spin-border 1s linear infinite;
+}
+
+/* white button sits perfectly centered inside container */
+.scroll-down-btn {
+  position: absolute;
+  inset: 2px; /* 4px gap all around */
+  border-radius: 999px;
+  background: #ffffff;
+  color: #000000;
+  font-weight: 700;
+  font-size: 18px;
+  border: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+@keyframes spin-border {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .message-bubble {
   padding: var(--bubble-padding);
   margin: var(--bubble-margin);
@@ -151,6 +235,7 @@ async function sendMessage() {
   max-width: var(--bubble-max-inner-width);
   font-size: 14px;
   word-break: break-word;
+  line-height: 1.4;
 }
 
 .user-message {
@@ -186,9 +271,6 @@ async function sendMessage() {
   padding: 10px;
 }
 
-.markdown-bubble {
-  line-height: 1.4;
-}
 .markdown-bubble h1,
 .markdown-bubble h2,
 .markdown-bubble h3 {
