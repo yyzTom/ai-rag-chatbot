@@ -10,7 +10,8 @@ from alembic import context
 # Load .env
 import os
 from dotenv import load_dotenv
-load_dotenv()
+from pathlib import Path
+load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 from database import Base
 target_metadata = Base.metadata

@@ -13,12 +13,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from openai import OpenAI, APIError
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 
 from crud import create_chat_message
 from database import engine, SessionLocal
 
-load_dotenv()
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 # Pydantic request schema for POST /chat
 class ChatRequest(BaseModel):
