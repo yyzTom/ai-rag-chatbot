@@ -8,11 +8,16 @@ import DOMPurify from 'dompurify'
 const chatStore = useChatStore()
 const userMessage = ref('')
 const isProcessing = ref(false)
+
 // template ref for scroll container
 const chatMessagesRef = ref<HTMLDivElement | null>(null)
 const wantsFollow = ref(false)
 const isNearBottom = ref(false)
 
+/**
+ * Calculate pixel distance from scroll position to bottom of chat container
+ * @returns pixels remaining to the bottom, 0, when fully scrolled down
+ */
 function getGapFromBottom(): number {
   if (!chatMessagesRef.value) return 0
   const el = chatMessagesRef.value
@@ -33,6 +38,11 @@ function handleScroll() {
   isNearBottom.value = gap < 30
 }
 
+/**
+ * Converts raw markdown text to sanitized HTML for chat rendering
+ * @param text - Raw markdown string from AI response
+ * @returns Sanitized safe HTML string
+ */
 function renderMarkdown(text: string): string {
   const rawHTML = marked.parse(text) as string
   return DOMPurify.sanitize(rawHTML)
@@ -45,6 +55,13 @@ async function scrollToBottom() {
   }
 }
 
+/**
+ * Typewriter-like incremental rendering for AI streamed response
+ * Updates chat store character-by-character, performs auto-scroll per N char to prevent fighting against user scrolling
+ * @param messageId - Target chat message id to update in store
+ * @param fullText - Complete AI response markdown string
+ * @param speed - Delay in ms between each character
+ */
 async function typeWriter(messageId: number, fullText: string, speed = 10) {
   wantsFollow.value = true
   let currentText = ''
@@ -60,7 +77,6 @@ async function typeWriter(messageId: number, fullText: string, speed = 10) {
       await nextTick(scrollToBottomSmart)
       charCounter = 0
     }
-
     await new Promise(resolve => setTimeout(resolve, speed))
   }
   wantsFollow.value = false
@@ -70,7 +86,6 @@ async function sendMessage() {
   if (userMessage.value.trim() && !isProcessing.value) {
     const userMsg = userMessage.value
     userMessage.value = ""
-
     wantsFollow.value = true
 
     // Add user message to store immdiately
@@ -92,7 +107,7 @@ async function sendMessage() {
         await nextTick()
         await scrollToBottom()
         await typeWriter(messageId, aiFullText)
-        
+
     } catch (error) {
         console.error('Error calling chat API:', error)
         // Update with error message
