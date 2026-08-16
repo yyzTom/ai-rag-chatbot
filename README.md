@@ -7,8 +7,8 @@
 - **Modern Interactive Chat Interface**: Vue 3 + TypeScript frontend with chat input, message history panel, and clean component-based UI styling
 - **FastAPI Backend**: Standards-compliant RESTful API paired with PostgreSQL for permanent, persistent chat history storage
 - **Database Migration Management**: Alembic for version-controlled database schema management and migrations
-- **AI-Powered Chat Responses**: Native OpenAI LLM API integration to generate intelligent, natural language replies to user prompts
-- **Custom Document Upload Pipeline**: PDF and plain text file upload support, powered by LangChain for automated text splitting and chunk processing
+- **AI-Powered Chat Responses**: Configurable LLM integration supporting any OpenAI‑compatible API endpoints (Zhipu GLM, Ollama, OpenAI etc.) for natural language chat completions
+- **Custom Document Upload Pipeline**: PDF and plain‑text file upload support, with document parsing and text‑chunk splitting for RAG ingestion
 - **Semantic Vector Search (RAG)**: PostgreSQL pgvector extension enabling embedding-based similarity search, delivering context-aware AI answers grounded in your private uploaded documents
 
 ## Tech Stack
@@ -17,7 +17,7 @@
 |-----------|------------|
 | Frontend  | Vue 3 + TypeScript + Vite + Element Plus + Pinia + Axios |
 | Backend   | FastAPI + PostgreSQL + SQLAlchemy + Alembic |
-| LLM       | OpenAI API |
+| LLM       | OpenAI‑compatible APIs (Zhipu GLM, Ollama, OpenAI) |
 | RAG       | LangChain + pgvector |
 
 
@@ -26,7 +26,7 @@
 ### Prerequisites
 - Node.js 18+ and npm
 - Python 3.10+
-- PostgreSQL 15+ (for chat history and vector storage)
+- Docker Desktop (provides pgvector‑enabled PostgreSQL instance; native Windows PostgreSQL does **not** support pgvector extension)
 
 ### Installation
 
@@ -50,17 +50,20 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### Backend environment
-- Copy a LLM provider from .env.example to .env, uncomment LLM provider and fill credentials.
+#### Project environment
+- Open `.env`, fill database credentials, LLM provider API key, base URL and model name.
 
 ### Database Prep
-1. Create an empty PostgreSQL database (via pgAdmin or psql).
-2. Create backend/.env and populate DATABASE_URL with your database credentials.
-3. Apply Alembic migrations to create all database tables:
+1. We use `docker‑compose.yml` to spin up a pre‑configured PostgreSQL instance with pgvector extension.
 ```bash
+docker compose up -d
+```
+2. Apply Alembic migrations to create database tables:
+```bash
+cd backend
 alembic upgrade head
 ```
-> When SQLAlchemy models are modified, generate new migration:
+> When SQLAlchemy models are modified:
 > ```
 > alembic revision --autogenerate -m "describe change"
 > # Review generated file in alembic/versions before applying
@@ -74,8 +77,9 @@ uvicorn main:app --reload
 
 ## Usage
 Follow these steps to run the application locally:
-1. Create empty PostgreSQL database and configure backend `.env` with database credentials and LLM API key
-2. Apply database migrations: `alembic upgrade head`
-3. Start the FastAPI backend server
-4. Start the Vue 3 frontend development server
-5. Open `http://localhost:5173` in your web browser to access the chat interface
+1. Copy `.env.example` → `.env` at project root, configure database credentials and LLM provider settings
+2. Start PostgreSQL database container: `docker compose up -d`
+3. Apply database migrations
+4. Start the FastAPI backend server
+5. Start the Vue 3 frontend development server
+6. Open `http://localhost:5173` in your web browser to access the chat interface
