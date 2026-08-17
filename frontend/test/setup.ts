@@ -1,12 +1,13 @@
-import {expect, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
-// Global setup for all tests
-vi.useFakeTimers()
-
 beforeEach(() => {
+  vi.useFakeTimers()
   setActivePinia(createPinia())
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 // Provide Pinia to all tests
