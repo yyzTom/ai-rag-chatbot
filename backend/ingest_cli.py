@@ -60,8 +60,7 @@ async def process_files(file_path: Path, chunk_size: int, chunk_overlap: int):
     async with SessionLocal() as session:
         for idx, chunk_text in enumerate(chunks):
             click.echo(f"Processing chunk {idx+1}/{len(chunks)}")
-            # embedding_vec = await get_embedding(chunk_text)
-            embedding_vec = [0.0]*1024
+            embedding_vec = await get_embedding(chunk_text)
             
             db_chunk = Document(
                 content=chunk_text,
